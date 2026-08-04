@@ -1,0 +1,157 @@
+name: payflow-lab
+
+x-payflow-environment: &payflow-environment
+  # Defaults below are intentionally local-development values; override in .env.
+  PAYFLOW_MYSQL_DSN: "${MYSQL_USER:-payflow}:${MYSQL_PASSWORD:-payflow_dev}@tcp(mysql:3306)/payflow?parseTime=true&charset=utf8mb4&loc=UTC"
+
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-payflow_root_dev}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-payflow}
+      MYSQL_USER: ${MYSQL_USER:-payflow}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-payflow_dev}
+    command:
+      - "--character-set-server=utf8mb4"
+      - "--collation-server=utf8mb4_0900_ai_ci"
+      - "--innodb-buffer-pool-size=256M"
+      - "--max-connections=100"
+    mem_limit: 640m
+    ports:
+      - "127.0.0.1:${PAYFLOW_MYSQL_PORT:-3307}:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./infra/mysql:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+      start_period: 20s
+    restart: unless-stopped
+
+  redis:
+    image: redis:8.8.1
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD:-payflow_redis_dev}", "--maxmemory", "256mb", "--maxmemory-policy", "noeviction"]
+    mem_limit: 384m
+    ports:
+      - "127.0.0.1:${PAYFLOW_REDIS_PORT:-6380}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a $$REDIS_PASSWORD --no-auth-warning ping | grep PONG"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-payflow_redis_dev}
+    restart: unless-stopped
+
+  dtm:
+    image: yedf/dtm:1.19.0
+    mem_limit: 256m
+    environment:
+      STORE_DRIVER: mysql
+      STORE_HOST: mysql
+      STORE_PORT: "3306"
+      STORE_USER: ${MYSQL_USER:-payflow}
+      STORE_PASSWORD: ${MYSQL_PASSWORD:-payflow_dev}
+      STORE_DB: dtm
+      STORE_MAX_OPEN_CONNS: "30"
+      STORE_MAX_IDLE_CONNS: "10"
+      TRANS_CRON_INTERVAL: "1"
+      RETRY_INTERVAL: "10"
+      REQUEST_TIMEOUT: "5"
+      TIMEOUT_TO_FAIL: "15"
+      LOG_LEVEL: info
+      IS_DOCKER: "1"
+    ports:
+      - "127.0.0.1:${PAYFLOW_DTM_PORT:-36789}:36789"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://127.0.0.1:36789/api/dtmsvr/newGid >/dev/null"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  payflow-account:
+    image: payflow-account:dev
+    build:
+      context: .
+    command: ["/app/payflow-account"]
+    mem_limit: 160m
+    environment:
+      <<: *payflow-environment
+      PAYFLOW_PARTICIPANT_ADDR: ":8082"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://127.0.0.1:8082/healthz >/dev/null"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  payflow-ledger:
+    image: payflow-ledger:dev
+    build:
+      context: .
+    command: ["/app/payflow-ledger"]
+    mem_limit: 160m
+    environment:
+      <<: *payflow-environment
+      PAYFLOW_PARTICIPANT_ADDR: ":8083"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://127.0.0.1:8083/healthz >/dev/null"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  payflow:
+    image: payflow-lab:dev
+    build:
+      context: .
+    command: ["/app/payflow-server"]
+    mem_limit: 256m
+    environment:
+      <<: *payflow-environment
+      PAYFLOW_MODE: distributed
+      PAYFLOW_ADDR: ":8081"
+      PAYFLOW_REDIS_ADDR: redis:6379
+      PAYFLOW_REDIS_PASSWORD: ${REDIS_PASSWORD:-payflow_redis_dev}
+      PAYFLOW_REDIS_PREFIX: "payflow:"
+      PAYFLOW_DTM_URL: http://dtm:36789/api/dtmsvr
+      PAYFLOW_ACCOUNT_URL: http://payflow-account:8082
+      PAYFLOW_LEDGER_URL: http://payflow-ledger:8083
+    ports:
+      - "127.0.0.1:${PAYFLOW_HTTP_PORT:-8081}:8081"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      dtm:
+        condition: service_healthy
+      payflow-account:
+        condition: service_healthy
+      payflow-ledger:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://127.0.0.1:8081/healthz >/dev/null"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
+  redis_data:

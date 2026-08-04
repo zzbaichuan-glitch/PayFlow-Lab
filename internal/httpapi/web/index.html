@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>PayFlow Lab · 支付一致性实验台</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23071016'/%3E%3Cpath d='M18 17h19c9 0 14 5 14 13s-5 13-14 13H28v10H18zm10 9v8h9c3 0 5-1 5-4s-2-4-5-4z' fill='%235ce1b7'/%3E%3C/svg%3E">
+  <style>
+    :root {
+      --ink: #e8eef2;
+      --muted: #8fa1ad;
+      --line: rgba(255, 255, 255, .11);
+      --panel: rgba(14, 25, 32, .88);
+      --bg: #071016;
+      --mint: #5ce1b7;
+      --blue: #70a5ff;
+      --amber: #ffc86b;
+      --red: #ff7e87;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 10% -10%, rgba(52, 122, 113, .28), transparent 35%),
+        radial-gradient(circle at 90% 5%, rgba(64, 96, 155, .22), transparent 32%),
+        var(--bg);
+      font: 14px/1.55 Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+      min-height: 100vh;
+    }
+    button, input, select { font: inherit; }
+    .shell { width: min(1180px, calc(100% - 32px)); margin: 0 auto; padding: 32px 0 56px; }
+    header { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; margin-bottom: 24px; }
+    .eyebrow { color: var(--mint); letter-spacing: .14em; text-transform: uppercase; font-size: 11px; font-weight: 800; }
+    h1 { font-size: clamp(28px, 4vw, 48px); letter-spacing: -.045em; line-height: 1.05; margin: 8px 0 10px; }
+    header p { color: var(--muted); max-width: 690px; margin: 0; }
+    .health { display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); padding: 8px 12px; border-radius: 99px; white-space: nowrap; background: rgba(255,255,255,.03); }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--amber); box-shadow: 0 0 12px currentColor; }
+    .dot.ok { background: var(--mint); }
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+    .stat, .panel { border: 1px solid var(--line); background: var(--panel); backdrop-filter: blur(12px); border-radius: 16px; }
+    .stat { padding: 17px 18px; }
+    .stat span { color: var(--muted); display: block; font-size: 12px; }
+    .stat strong { display: block; font-size: 24px; letter-spacing: -.03em; margin-top: 5px; }
+    .layout { display: grid; grid-template-columns: .88fr 1.12fr; gap: 16px; }
+    .panel { padding: 20px; min-width: 0; }
+    .panel + .panel { margin-top: 16px; }
+    .layout > div > .panel:first-child { margin-top: 0; }
+    h2 { font-size: 16px; margin: 0 0 4px; }
+    .hint { margin: 0 0 18px; color: var(--muted); font-size: 12px; }
+    label { display: block; color: var(--muted); font-size: 12px; margin-bottom: 12px; }
+    input, select {
+      width: 100%; color: var(--ink); background: rgba(255,255,255,.045); border: 1px solid var(--line);
+      border-radius: 9px; padding: 10px 11px; outline: none; margin-top: 5px;
+    }
+    input:focus, select:focus { border-color: var(--mint); box-shadow: 0 0 0 3px rgba(92,225,183,.09); }
+    select option { background: #101c23; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .check { display: flex; align-items: center; gap: 8px; color: var(--ink); }
+    .check input { width: auto; margin: 0; }
+    button {
+      border: 1px solid var(--line); color: var(--ink); background: rgba(255,255,255,.06);
+      border-radius: 9px; padding: 9px 12px; cursor: pointer; transition: .15s ease;
+    }
+    button:hover { transform: translateY(-1px); border-color: rgba(255,255,255,.25); }
+    button:disabled { opacity: .4; cursor: not-allowed; transform: none; }
+    button.primary { width: 100%; background: var(--mint); border-color: var(--mint); color: #072019; font-weight: 800; padding: 11px; }
+    button.danger { color: var(--red); }
+    .actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 6px; }
+    .account { display: flex; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
+    .account:last-child { border: 0; }
+    .account span { color: var(--muted); }
+    .payment-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
+    .payment-id { color: var(--muted); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 12px; overflow-wrap: anywhere; }
+    .badge { padding: 5px 9px; border-radius: 99px; font-size: 11px; font-weight: 800; letter-spacing: .04em; background: rgba(112,165,255,.12); color: var(--blue); }
+    .badge.SUCCESS { color: var(--mint); background: rgba(92,225,183,.12); }
+    .badge.FAILED { color: var(--red); background: rgba(255,126,135,.12); }
+    .badge.CLOSED { color: var(--muted); }
+    .empty { color: var(--muted); border: 1px dashed var(--line); border-radius: 12px; padding: 30px 16px; text-align: center; }
+    .timeline { margin-top: 15px; }
+    .event { display: grid; grid-template-columns: 30px 1fr; gap: 10px; position: relative; padding-bottom: 15px; }
+    .event:not(:last-child)::before { content: ""; position: absolute; left: 14px; top: 25px; bottom: 0; width: 1px; background: var(--line); }
+    .event-seq { height: 29px; width: 29px; display: grid; place-items: center; border-radius: 50%; border: 1px solid var(--line); color: var(--muted); font-size: 10px; background: #0d181f; z-index: 1; }
+    .event-title { font-weight: 700; font-size: 12px; }
+    .event-message, .event-time { color: var(--muted); font-size: 11px; }
+    .notice { min-height: 22px; margin-top: 10px; color: var(--mint); font-size: 12px; }
+    .notice.error { color: var(--red); }
+    code { color: var(--blue); }
+    footer { display: flex; justify-content: space-between; gap: 12px; color: var(--muted); font-size: 11px; margin-top: 18px; }
+    @media (max-width: 850px) { .stats { grid-template-columns: 1fr 1fr; } .layout { grid-template-columns: 1fr; } }
+    @media (max-width: 520px) { header { display: block; } .health { margin-top: 16px; width: fit-content; } .stats { grid-template-columns: 1fr; } .row { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header>
+      <div>
+        <div class="eyebrow">Local consistency playground</div>
+        <h1>PayFlow Lab</h1>
+        <p>用一个可观察的 Go 支付实验系统，演示请求幂等、资金冻结、DTM TCC、账本唯一落账，以及重复与乱序回调保护。</p>
+      </div>
+      <div class="health"><i id="healthDot" class="dot"></i><span id="healthText">连接中</span></div>
+    </header>
+
+    <section class="stats">
+      <div class="stat"><span>支付单</span><strong id="metricPayments">—</strong></div>
+      <div class="stat"><span>成功落账</span><strong id="metricLedger">—</strong></div>
+      <div class="stat"><span>幂等重放</span><strong id="metricReplay">—</strong></div>
+      <div class="stat"><span>被保护的回调</span><strong id="metricProtected">—</strong></div>
+    </section>
+
+    <section class="layout">
+      <div>
+        <div class="panel">
+          <h2>发起支付</h2>
+          <p id="modeHint" class="hint">正在读取运行模式…</p>
+          <form id="paymentForm">
+            <label>业务订单号<input id="orderId" required maxlength="128"></label>
+            <div class="row">
+              <label>付款账户<input id="accountId" value="demo-user" required></label>
+              <label>金额（分）<input id="amount" type="number" min="1" value="1999" required></label>
+            </div>
+            <label>幂等键<input id="idempotencyKey" required></label>
+            <label>故障注入
+              <select id="fault">
+                <option value="">无故障</option>
+              </select>
+            </label>
+            <label id="autoConfirmLabel" class="check"><input id="autoConfirm" type="checkbox"> 创建后自动模拟成功回调</label>
+            <button class="primary" type="submit">创建支付单</button>
+          </form>
+          <div id="notice" class="notice"></div>
+        </div>
+
+        <div class="panel">
+          <h2>账户与账本</h2>
+          <div class="account"><span>可用余额</span><strong id="available">—</strong></div>
+          <div class="account"><span>冻结余额</span><strong id="frozen">—</strong></div>
+          <div class="account"><span>账本条数</span><strong id="ledgerCount">—</strong></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="panel">
+          <h2>当前支付</h2>
+          <p class="hint">按钮会按当前状态和回调历史启用；先产生成功/失败回调，再演示重复、乱序和终态保护。</p>
+          <div id="paymentEmpty" class="empty">创建一笔支付，开始观察状态机。</div>
+          <div id="paymentView" hidden>
+            <div class="payment-head">
+              <div>
+                <div id="paymentOrder"></div>
+                <div id="paymentId" class="payment-id"></div>
+              </div>
+              <span id="paymentStatus" class="badge"></span>
+            </div>
+            <div class="account"><span>金额</span><strong id="paymentAmount"></strong></div>
+            <div id="paymentGidRow" class="account" hidden><span>DTM GID</span><strong id="paymentGid" class="payment-id"></strong></div>
+            <div class="account"><span>最后回调序号</span><strong id="lastSequence"></strong></div>
+            <div class="actions">
+              <button id="successButton">成功回调</button>
+              <button id="failureButton" class="danger">失败回调</button>
+              <button id="confirmFaultButton">Confirm 前故障</button>
+              <button id="duplicateButton">重复回调</button>
+              <button id="outOfOrderButton">乱序回调</button>
+              <button id="terminalButton">终态回退尝试</button>
+              <button id="closeButton">关闭支付</button>
+            </div>
+            <div id="timeline" class="timeline"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+    <footer><span id="runtimeMode">默认端口 8081 · 读取模式中</span><button id="resetButton" class="danger">重置实验数据</button></footer>
+  </main>
+
+  <script>
+    const state = { paymentId: "", lastEventId: "", lastEventSequence: 0, mode: "memory" };
+    const byId = id => document.getElementById(id);
+    const money = cents => new Intl.NumberFormat("zh-CN", { style: "currency", currency: "CNY" }).format(cents / 100);
+    const unique = prefix => `${prefix}_${Date.now()}_${Math.random().toString(16).slice(2, 8)}`;
+
+    async function api(path, options = {}) {
+      const response = await fetch(path, { headers: { "Content-Type": "application/json", ...(options.headers || {}) }, ...options });
+      const payload = await response.json().catch(() => ({ success: false, error: { message: "响应不是 JSON" } }));
+      if (!response.ok || !payload.success) throw new Error(payload.error?.message || `HTTP ${response.status}`);
+      return payload.data;
+    }
+
+    function freshKeys() {
+      byId("orderId").value = unique("order");
+      byId("idempotencyKey").value = unique("idem");
+    }
+
+    async function configureMode() {
+      const system = await api("/api/v1/system");
+      state.mode = system.mode;
+      const distributed = state.mode === "distributed";
+      const faultSelect = byId("fault");
+      faultSelect.replaceChildren();
+      const choices = distributed
+        ? [["", "无故障"], ["after_account_try", "账户 Try 后中断 → DTM Cancel"], ["ledger_try", "账本 Try 失败 → DTM Cancel"]]
+        : [["", "无故障"], ["before_freeze", "Try 前失败"], ["after_freeze", "Try 后失败并 Cancel"]];
+      choices.forEach(([value, label]) => {
+        const option = document.createElement("option"); option.value = value; option.textContent = label; faultSelect.append(option);
+      });
+      byId("modeHint").textContent = distributed
+        ? "真实 DTM TCC 模式：MySQL 持久化，Redis 幂等快路径，两个独立 participant；初始账户 ¥10,000.00。"
+        : "内存学习模式：无 Docker、无外部依赖；初始账户 demo-user 有 ¥10,000.00。";
+      byId("runtimeMode").textContent = distributed
+        ? "默认端口 8081 · Distributed · MySQL + Redis + DTM 1.19.0"
+        : "默认端口 8081 · Memory Store · 无外部依赖";
+      byId("autoConfirm").disabled = distributed;
+      byId("autoConfirm").checked = false;
+      byId("autoConfirmLabel").style.opacity = distributed ? ".45" : "1";
+    }
+
+    function notify(message, error = false) {
+      byId("notice").textContent = message;
+      byId("notice").className = `notice${error ? " error" : ""}`;
+    }
+
+    async function refreshSummary() {
+      const [health, metrics, account, ledger] = await Promise.all([
+        api("/healthz"), api("/api/v1/metrics"), api("/api/v1/accounts/demo-user"), api("/api/v1/ledger")
+      ]);
+      byId("healthDot").classList.add("ok");
+      byId("healthText").textContent = `${health.status} · ${health.mode}`;
+      byId("metricPayments").textContent = metrics.payments_total;
+      byId("metricLedger").textContent = metrics.ledger_entries;
+      byId("metricReplay").textContent = metrics.idempotent_replays_total;
+      byId("metricProtected").textContent = metrics.callbacks_duplicate_total + metrics.callbacks_out_of_order_total + metrics.callbacks_terminal_ignored_total;
+      byId("available").textContent = money(account.account.available_cents);
+      byId("frozen").textContent = money(account.account.frozen_cents);
+      byId("ledgerCount").textContent = ledger.entries.length;
+    }
+
+    async function refreshPayment() {
+      if (!state.paymentId) return;
+      const details = await api(`/api/v1/payments/${state.paymentId}`);
+      const payment = details.payment;
+      byId("paymentEmpty").hidden = true;
+      byId("paymentView").hidden = false;
+      byId("paymentOrder").textContent = payment.order_id;
+      byId("paymentId").textContent = payment.id;
+      byId("paymentStatus").textContent = payment.status;
+      byId("paymentStatus").className = `badge ${payment.status}`;
+      byId("paymentAmount").textContent = money(payment.amount_cents);
+      byId("paymentGidRow").hidden = !payment.gid;
+      byId("paymentGid").textContent = payment.gid || "";
+      byId("lastSequence").textContent = payment.last_callback_sequence;
+      setActionStates(payment);
+      renderEvents(details.events);
+    }
+
+    function setActionStates(payment) {
+      const processing = payment.status === "PROCESSING" && state.mode === "memory";
+      const terminal = ["SUCCESS", "FAILED", "CLOSED"].includes(payment.status);
+      byId("successButton").disabled = !processing;
+      byId("failureButton").disabled = !processing;
+      byId("confirmFaultButton").disabled = !processing;
+      byId("closeButton").disabled = !processing;
+      byId("duplicateButton").disabled = !state.lastEventId || state.lastEventSequence <= 0;
+      byId("outOfOrderButton").disabled = payment.last_callback_sequence <= 0;
+      byId("terminalButton").disabled = !terminal;
+    }
+
+    function renderEvents(events) {
+      const timeline = byId("timeline");
+      timeline.replaceChildren();
+      [...events].reverse().forEach(event => {
+        const item = document.createElement("div"); item.className = "event";
+        const seq = document.createElement("div"); seq.className = "event-seq"; seq.textContent = event.sequence;
+        const body = document.createElement("div");
+        const title = document.createElement("div"); title.className = "event-title"; title.textContent = event.type;
+        const message = document.createElement("div"); message.className = "event-message"; message.textContent = event.message;
+        const time = document.createElement("div"); time.className = "event-time"; time.textContent = new Date(event.at).toLocaleString("zh-CN");
+        body.append(title, message, time); item.append(seq, body); timeline.append(item);
+      });
+    }
+
+    async function refreshAll() {
+      await Promise.all([refreshSummary(), refreshPayment()]);
+    }
+
+    byId("paymentForm").addEventListener("submit", async event => {
+      event.preventDefault(); notify("处理中…");
+      try {
+        const autoConfirm = byId("autoConfirm").checked;
+        const createPath = state.mode === "distributed" ? "/api/v1/distributed/payments" : "/api/v1/payments";
+        const result = await api(createPath, {
+          method: "POST",
+          headers: { "Idempotency-Key": byId("idempotencyKey").value },
+          body: JSON.stringify({
+            order_id: byId("orderId").value, account_id: byId("accountId").value,
+            amount_cents: Number(byId("amount").value), currency: "CNY",
+            auto_confirm: autoConfirm, fault: byId("fault").value
+          })
+        });
+        if (state.paymentId !== result.payment.id) {
+          state.lastEventId = "";
+          state.lastEventSequence = 0;
+        }
+        state.paymentId = result.payment.id;
+        if (autoConfirm && result.payment.last_callback_sequence === 1) {
+          state.lastEventId = `auto_${result.payment.id}`; state.lastEventSequence = 1;
+        }
+        notify(result.idempotent_replay
+          ? "命中幂等键：返回原支付单，没有重复扣款。"
+          : (state.mode === "distributed" ? `真实 DTM TCC 已执行：${result.payment.status}` : "支付单已创建。"));
+        await refreshAll();
+        if (!result.idempotent_replay) freshKeys();
+      } catch (error) { notify(error.message, true); }
+    });
+
+    async function sendCallback(outcome, options = {}) {
+      if (!state.paymentId) return;
+      const details = await api(`/api/v1/payments/${state.paymentId}`);
+      const sequence = options.sequence ?? (details.payment.last_callback_sequence + 1);
+      const eventId = options.eventId || unique("channel");
+      try {
+        const result = await api(`/api/v1/payments/${state.paymentId}/callbacks`, {
+          method: "POST",
+          body: JSON.stringify({ event_id: eventId, sequence, outcome, reason: outcome === "failed" ? "mock channel rejected" : "", fault: options.fault || "" })
+        });
+        if (!options.preserveLast) { state.lastEventId = eventId; state.lastEventSequence = sequence; }
+        notify(`回调结果：${result.disposition}`);
+      } catch (error) { notify(error.message + "（可用相同 event_id 重试）", true); }
+      await refreshAll();
+    }
+
+    byId("successButton").onclick = () => sendCallback("success");
+    byId("failureButton").onclick = () => sendCallback("failed");
+    byId("confirmFaultButton").onclick = () => sendCallback("success", { fault: "before_confirm" });
+    byId("duplicateButton").onclick = async () => {
+      const details = await api(`/api/v1/payments/${state.paymentId}`);
+      const eventId = state.lastEventId || `auto_${state.paymentId}`;
+      const sequence = state.lastEventSequence || details.payment.last_callback_sequence || 1;
+      await sendCallback("success", { eventId, sequence, preserveLast: true });
+    };
+    byId("outOfOrderButton").onclick = async () => {
+      const details = await api(`/api/v1/payments/${state.paymentId}`);
+      await sendCallback("success", { sequence: Math.max(1, details.payment.last_callback_sequence), preserveLast: true });
+    };
+    byId("terminalButton").onclick = async () => {
+      const details = await api(`/api/v1/payments/${state.paymentId}`);
+      await sendCallback("failed", { sequence: details.payment.last_callback_sequence + 1, preserveLast: true });
+    };
+    byId("closeButton").onclick = async () => {
+      try {
+        await api(`/api/v1/payments/${state.paymentId}/close`, { method: "POST", body: JSON.stringify({ reason: "closed from demo UI" }) });
+        notify("支付已关闭，冻结资金已释放。"); await refreshAll();
+      } catch (error) { notify(error.message, true); }
+    };
+    byId("resetButton").onclick = async () => {
+      await api("/api/v1/demo/reset", { method: "POST" });
+      state.paymentId = ""; state.lastEventId = ""; state.lastEventSequence = 0;
+      byId("paymentEmpty").hidden = false; byId("paymentView").hidden = true;
+      notify("实验数据已重置。"); freshKeys(); await refreshSummary();
+    };
+
+    freshKeys();
+    (async () => {
+      await configureMode();
+      await refreshSummary();
+    })().catch(error => { byId("healthText").textContent = "服务不可用"; notify(error.message, true); });
+  </script>
+</body>
+</html>

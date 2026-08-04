@@ -1,0 +1,15 @@
+# Go build/test output
+*.exe
+*.test
+*.out
+/bin/
+
+# Editors and operating systems
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Local environment overrides
+.env
+.env.local
