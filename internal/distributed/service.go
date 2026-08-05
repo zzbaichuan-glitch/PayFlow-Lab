@@ -12,10 +12,10 @@ import (
 	"github.com/dtm-labs/dtm/client/dtmcli"
 	"github.com/go-resty/resty/v2"
 
-	"payflow-lab/internal/domain"
-	"payflow-lab/internal/participant"
-	"payflow-lab/internal/service"
-	"payflow-lab/internal/store"
+	"github.com/zzbaichuan-glitch/PayFlow-Lab/internal/domain"
+	"github.com/zzbaichuan-glitch/PayFlow-Lab/internal/participant"
+	"github.com/zzbaichuan-glitch/PayFlow-Lab/internal/service"
+	"github.com/zzbaichuan-glitch/PayFlow-Lab/internal/store"
 )
 
 type ServiceConfig struct {

@@ -10,8 +10,8 @@ import (
 
 	gomysql "github.com/go-sql-driver/mysql"
 
-	"payflow-lab/internal/domain"
-	"payflow-lab/internal/store"
+	"github.com/zzbaichuan-glitch/PayFlow-Lab/internal/domain"
+	"github.com/zzbaichuan-glitch/PayFlow-Lab/internal/store"
 )
 
 type Repository struct {

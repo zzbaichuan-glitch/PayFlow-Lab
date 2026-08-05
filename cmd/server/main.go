@@ -6,11 +6,11 @@ import (
 	"os"
 	"strings"
 
-	"payflow-lab/internal/distributed"
-	"payflow-lab/internal/httpapi"
-	"payflow-lab/internal/serverutil"
-	"payflow-lab/internal/service"
-	"payflow-lab/internal/store"
+	"github.com/zzbaichuan-glitch/PayFlow-Lab/internal/distributed"
+	"github.com/zzbaichuan-glitch/PayFlow-Lab/internal/httpapi"
+	"github.com/zzbaichuan-glitch/PayFlow-Lab/internal/serverutil"
+	"github.com/zzbaichuan-glitch/PayFlow-Lab/internal/service"
+	"github.com/zzbaichuan-glitch/PayFlow-Lab/internal/store"
 )
 
 func main() {

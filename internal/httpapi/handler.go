@@ -11,10 +11,10 @@ import (
 	"strings"
 	"time"
 
-	"payflow-lab/internal/distributed"
-	"payflow-lab/internal/domain"
-	"payflow-lab/internal/service"
-	"payflow-lab/internal/store"
+	"github.com/zzbaichuan-glitch/PayFlow-Lab/internal/distributed"
+	"github.com/zzbaichuan-glitch/PayFlow-Lab/internal/domain"
+	"github.com/zzbaichuan-glitch/PayFlow-Lab/internal/service"
+	"github.com/zzbaichuan-glitch/PayFlow-Lab/internal/store"
 )
 
 //go:embed web/index.html

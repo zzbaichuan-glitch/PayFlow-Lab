@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"payflow-lab/internal/domain"
+	"github.com/zzbaichuan-glitch/PayFlow-Lab/internal/domain"
 )
 
 var (

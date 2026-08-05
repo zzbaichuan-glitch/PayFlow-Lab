@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"payflow-lab/internal/domain"
+	"github.com/zzbaichuan-glitch/PayFlow-Lab/internal/domain"
 )
 
 const demoBalanceCents int64 = 1_000_000

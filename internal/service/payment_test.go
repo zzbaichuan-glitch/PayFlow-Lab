@@ -7,9 +7,9 @@ import (
 	"sync"
 	"testing"
 
-	"payflow-lab/internal/domain"
-	"payflow-lab/internal/service"
-	"payflow-lab/internal/store"
+	"github.com/zzbaichuan-glitch/PayFlow-Lab/internal/domain"
+	"github.com/zzbaichuan-glitch/PayFlow-Lab/internal/service"
+	"github.com/zzbaichuan-glitch/PayFlow-Lab/internal/store"
 )
 
 func TestPaymentLifecycleIdempotencyAndCallbackGuards(t *testing.T) {

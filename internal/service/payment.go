@@ -12,8 +12,8 @@ import (
 	"sync/atomic"
 	"time"
 
-	"payflow-lab/internal/domain"
-	"payflow-lab/internal/store"
+	"github.com/zzbaichuan-glitch/PayFlow-Lab/internal/domain"
+	"github.com/zzbaichuan-glitch/PayFlow-Lab/internal/store"
 )
 
 var ErrInjectedFault = errors.New("injected fault")

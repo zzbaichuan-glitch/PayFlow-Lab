@@ -1,20 +1,19 @@
 # PayFlow Lab
 
-一个可以从单机状态机一路学到真实分布式 TCC 的 Go 支付一致性实验室。项目同时保留两种运行模式：
+一个聚焦支付一致性、幂等与故障恢复的小型 Go 系统。项目保留两种运行模式：
 
 - `memory`：零依赖、单进程，适合先理解支付状态机、幂等、回调去重和本地 Try / Confirm / Cancel。
 - `distributed`：Go + MySQL 8.4 + Redis 8.8.1 + DTM 1.19.0，账户和账本是独立 HTTP 参与者，DTM 真实协调跨服务 Confirm / Cancel。
 
 演示台：[http://localhost:8081](http://localhost:8081)。默认账户 `demo-user`，初始余额 `1,000,000` 分（¥10,000.00）。所有金额都用 `int64` 整数分表示。
 
-> 这是学习与面试演示项目，不是生产支付系统。它没有真实渠道、鉴权、密钥管理、多机部署、限流和完整可观测体系；README 会明确区分已实现能力与生产边界。
+> 工程边界：这是本地实验系统，不接入真实支付渠道，也不包含生产环境所需的鉴权、密钥管理、多机部署、限流和完整可观测体系。
 
 ## 一分钟运行分布式版
 
 要求：Docker Desktop、Docker Compose v2、PowerShell。第一次构建需要拉取镜像和 Go 依赖。
 
 ```powershell
-Set-Location -LiteralPath 'D:\PayFlow Lab'
 .\scripts\start-distributed.ps1
 .\scripts\demo-distributed.ps1
 ```
@@ -302,9 +301,9 @@ PayFlow Lab/
 └─ compose.yaml
 ```
 
-## 面试讲解建议
+## 设计取舍与边界
 
-建议按“问题—约束—方案—证据—边界”讲，不要声称自己实现了 DTM 内核：
+项目围绕“问题—约束—方案—证据—边界”组织实现：
 
 1. 问题：跨账户与账本服务时，单库事务不够；重复请求和超时重试还会放大风险。
 2. 约束：金额必须是整数；幂等最终要由数据库唯一约束保证；失败终态必须在补偿完成后才能写入。
@@ -312,15 +311,9 @@ PayFlow Lab/
 4. 证据：运行 `demo-distributed.ps1`，展示 SUCCESS 的 DTM GID，再展示 `ledger_try` 下 DTM `failed`、reservation `CANCELLED`、余额恢复、唯一 POSTED ledger 和 Barrier rows。
 5. 边界：单实例协调器、开发密码、没有真实支付渠道与鉴权，也没有把“容器自动重启”包装成生产级高可用。
 
-可以准确写成简历表述：
-
-> 使用 Go、MySQL、Redis 与 DTM 实现可运行的支付 TCC 实验系统，拆分账户/账本参与者，以 BranchBarrier 和本地事务处理重复调用、空补偿与悬挂；通过 MySQL 唯一约束实现最终幂等，Redis 仅作非权威缓存；设计故障注入及诊断接口，验证 Confirm/Cancel、余额恢复和账本唯一性。
-
 ## 版本与参考
 
 - [DTM 官方 GitHub 仓库](https://github.com/dtm-labs/dtm)，本项目固定服务镜像 `yedf/dtm:1.19.0`，Go 客户端来自同版本模块。
 - [DTM TCC 官方文档](https://en.dtm.pub/practice/tcc.html)。
 - [DTM 事务屏障官方文档](https://en.dtm.pub/practice/barrier.html)。
 - MySQL 镜像 `mysql:8.4`，Redis 镜像 `redis:8.8.1`。
-
-下一阶段适合增加恢复扫描器/定时对账、Outbox、Prometheus + OpenTelemetry、回调 HMAC 与 nonce、防刷限流、真实压测和多实例故障实验。

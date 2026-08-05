@@ -5,9 +5,9 @@ import (
 	"log"
 	"os"
 
-	"payflow-lab/internal/distributed"
-	"payflow-lab/internal/participant"
-	"payflow-lab/internal/serverutil"
+	"github.com/zzbaichuan-glitch/PayFlow-Lab/internal/distributed"
+	"github.com/zzbaichuan-glitch/PayFlow-Lab/internal/participant"
+	"github.com/zzbaichuan-glitch/PayFlow-Lab/internal/serverutil"
 )
 
 func main() {

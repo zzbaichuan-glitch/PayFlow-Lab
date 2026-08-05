@@ -1,4 +1,4 @@
-module payflow-lab
+module github.com/zzbaichuan-glitch/PayFlow-Lab
 
 go 1.24.0
 

@@ -3,192 +3,838 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>PayFlow Lab · 支付一致性实验台</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23071016'/%3E%3Cpath d='M18 17h19c9 0 14 5 14 13s-5 13-14 13H28v10H18zm10 9v8h9c3 0 5-1 5-4s-2-4-5-4z' fill='%235ce1b7'/%3E%3C/svg%3E">
+  <meta name="color-scheme" content="light">
+  <title>PayFlow · 支付账务中心</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%231677ff'/%3E%3Cpath d='M18 16h19c9 0 14 5 14 13s-5 13-14 13H28v7H18zm10 9v8h9c3 0 5-1 5-4s-2-4-5-4z' fill='white'/%3E%3C/svg%3E">
   <style>
     :root {
-      --ink: #e8eef2;
-      --muted: #8fa1ad;
-      --line: rgba(255, 255, 255, .11);
-      --panel: rgba(14, 25, 32, .88);
-      --bg: #071016;
-      --mint: #5ce1b7;
-      --blue: #70a5ff;
-      --amber: #ffc86b;
-      --red: #ff7e87;
+      --brand: #1677ff;
+      --brand-hover: #0958d9;
+      --brand-soft: #eaf3ff;
+      --navy: #16243d;
+      --text: #1f2a37;
+      --muted: #667085;
+      --subtle: #98a2b3;
+      --line: #e4e8ee;
+      --line-strong: #d0d7e2;
+      --surface: #ffffff;
+      --background: #f4f6f9;
+      --success: #0b875b;
+      --success-soft: #eaf7f1;
+      --warning: #b26a00;
+      --warning-soft: #fff7e6;
+      --danger: #cf3038;
+      --danger-soft: #fff0f0;
+      --radius: 8px;
+      --shadow: 0 8px 24px rgba(18, 38, 63, .06);
     }
+
     * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+
+    html { background: var(--background); }
     body {
       margin: 0;
-      color: var(--ink);
-      background:
-        radial-gradient(circle at 10% -10%, rgba(52, 122, 113, .28), transparent 35%),
-        radial-gradient(circle at 90% 5%, rgba(64, 96, 155, .22), transparent 32%),
-        var(--bg);
-      font: 14px/1.55 Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
       min-height: 100vh;
+      color: var(--text);
+      background: var(--background);
+      font: 14px/1.6 "MiSans", "HarmonyOS Sans SC", "Microsoft YaHei UI", "Microsoft YaHei", sans-serif;
+      -webkit-font-smoothing: antialiased;
     }
+
     button, input, select { font: inherit; }
-    .shell { width: min(1180px, calc(100% - 32px)); margin: 0 auto; padding: 32px 0 56px; }
-    header { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; margin-bottom: 24px; }
-    .eyebrow { color: var(--mint); letter-spacing: .14em; text-transform: uppercase; font-size: 11px; font-weight: 800; }
-    h1 { font-size: clamp(28px, 4vw, 48px); letter-spacing: -.045em; line-height: 1.05; margin: 8px 0 10px; }
-    header p { color: var(--muted); max-width: 690px; margin: 0; }
-    .health { display: flex; align-items: center; gap: 8px; border: 1px solid var(--line); padding: 8px 12px; border-radius: 99px; white-space: nowrap; background: rgba(255,255,255,.03); }
-    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--amber); box-shadow: 0 0 12px currentColor; }
-    .dot.ok { background: var(--mint); }
-    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
-    .stat, .panel { border: 1px solid var(--line); background: var(--panel); backdrop-filter: blur(12px); border-radius: 16px; }
-    .stat { padding: 17px 18px; }
-    .stat span { color: var(--muted); display: block; font-size: 12px; }
-    .stat strong { display: block; font-size: 24px; letter-spacing: -.03em; margin-top: 5px; }
-    .layout { display: grid; grid-template-columns: .88fr 1.12fr; gap: 16px; }
-    .panel { padding: 20px; min-width: 0; }
-    .panel + .panel { margin-top: 16px; }
-    .layout > div > .panel:first-child { margin-top: 0; }
-    h2 { font-size: 16px; margin: 0 0 4px; }
-    .hint { margin: 0 0 18px; color: var(--muted); font-size: 12px; }
-    label { display: block; color: var(--muted); font-size: 12px; margin-bottom: 12px; }
+    button, summary { -webkit-tap-highlight-color: transparent; }
+
+    .skip-link {
+      position: fixed;
+      left: 16px;
+      top: -48px;
+      z-index: 100;
+      padding: 9px 14px;
+      color: #fff;
+      background: var(--navy);
+      border-radius: 4px;
+      transition: top .15s ease;
+    }
+    .skip-link:focus { top: 12px; }
+
+    .app-header {
+      height: 64px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+    }
+    .header-inner {
+      width: min(1200px, calc(100% - 40px));
+      height: 100%;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+    }
+    .brand { display: flex; align-items: center; gap: 11px; min-width: 0; }
+    .brand-mark {
+      width: 34px;
+      height: 34px;
+      display: grid;
+      place-items: center;
+      flex: 0 0 auto;
+      color: #fff;
+      background: var(--brand);
+      border-radius: 7px;
+      font-size: 19px;
+      font-weight: 800;
+      letter-spacing: -.06em;
+    }
+    .brand-copy { display: flex; align-items: baseline; gap: 10px; white-space: nowrap; }
+    .brand-copy strong { color: var(--navy); font-size: 18px; letter-spacing: -.02em; }
+    .brand-copy span { color: var(--muted); font-size: 13px; }
+
+    .service-state {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 13px;
+      white-space: nowrap;
+    }
+    .service-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #d9a441;
+      box-shadow: 0 0 0 3px #fff7e6;
+    }
+    .service-dot.ok { background: var(--success); box-shadow: 0 0 0 3px var(--success-soft); }
+    .service-dot.error { background: var(--danger); box-shadow: 0 0 0 3px var(--danger-soft); }
+
+    .workspace {
+      width: min(1200px, calc(100% - 40px));
+      margin: 0 auto;
+      padding: 30px 0 42px;
+    }
+    .page-heading {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 28px;
+      margin-bottom: 20px;
+    }
+    .kicker {
+      margin-bottom: 4px;
+      color: var(--brand);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: .13em;
+      text-transform: uppercase;
+    }
+    h1 { margin: 0; color: var(--navy); font-size: 27px; line-height: 1.35; letter-spacing: -.02em; }
+    .page-heading p { margin: 6px 0 0; color: var(--muted); }
+    .runtime {
+      min-width: 250px;
+      padding-left: 16px;
+      border-left: 2px solid var(--brand);
+    }
+    .runtime span { display: block; color: var(--subtle); font-size: 12px; }
+    .runtime strong { display: block; margin-top: 3px; color: var(--navy); font-size: 13px; font-weight: 600; }
+
+    .overview {
+      display: grid;
+      grid-template-columns: 1.15fr 1.85fr;
+      margin-bottom: 18px;
+      overflow: hidden;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .balance-summary {
+      position: relative;
+      padding: 22px 26px;
+      border-right: 1px solid var(--line);
+    }
+    .balance-summary::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 4px;
+      background: var(--brand);
+    }
+    .summary-label { color: var(--muted); font-size: 12px; }
+    .balance-line { display: flex; align-items: baseline; gap: 8px; margin: 8px 0 15px; }
+    .currency { color: var(--navy); font-size: 16px; font-weight: 700; }
+    .balance-line strong { color: var(--navy); font-size: 31px; line-height: 1; letter-spacing: -.035em; font-variant-numeric: tabular-nums; }
+    .balance-meta { display: flex; gap: 30px; }
+    .balance-meta span { color: var(--subtle); font-size: 12px; }
+    .balance-meta strong { margin-left: 8px; color: var(--text); font-size: 13px; font-variant-numeric: tabular-nums; }
+    .metric-list { display: grid; grid-template-columns: repeat(4, 1fr); }
+    .metric {
+      min-width: 0;
+      padding: 22px 20px;
+      border-right: 1px solid var(--line);
+    }
+    .metric:last-child { border-right: 0; }
+    .metric span { display: block; color: var(--muted); font-size: 12px; }
+    .metric strong {
+      display: block;
+      margin-top: 8px;
+      color: var(--navy);
+      font-size: 25px;
+      line-height: 1.15;
+      font-variant-numeric: tabular-nums;
+    }
+    .metric small { display: block; margin-top: 6px; color: var(--subtle); font-size: 11px; }
+
+    .content-grid { display: grid; grid-template-columns: 400px minmax(0, 1fr); gap: 18px; align-items: start; }
+    .surface {
+      min-width: 0;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .surface-head {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      padding: 20px 22px 17px;
+      border-bottom: 1px solid var(--line);
+    }
+    .section-index {
+      display: grid;
+      place-items: center;
+      width: 28px;
+      height: 28px;
+      flex: 0 0 auto;
+      color: var(--brand);
+      background: var(--brand-soft);
+      border-radius: 5px;
+      font-size: 11px;
+      font-weight: 800;
+    }
+    h2 { margin: 1px 0 2px; color: var(--navy); font-size: 17px; line-height: 1.4; }
+    .surface-head p { margin: 0; color: var(--muted); font-size: 12px; }
+
+    .form-body { padding: 20px 22px 22px; }
+    .field { margin-bottom: 16px; }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    label, .field-label { display: block; margin-bottom: 7px; color: #475467; font-size: 12px; font-weight: 600; }
     input, select {
-      width: 100%; color: var(--ink); background: rgba(255,255,255,.045); border: 1px solid var(--line);
-      border-radius: 9px; padding: 10px 11px; outline: none; margin-top: 5px;
+      width: 100%;
+      height: 40px;
+      padding: 0 11px;
+      color: var(--text);
+      background: #fff;
+      border: 1px solid var(--line-strong);
+      border-radius: 5px;
+      outline: 0;
+      transition: border-color .15s ease, box-shadow .15s ease;
     }
-    input:focus, select:focus { border-color: var(--mint); box-shadow: 0 0 0 3px rgba(92,225,183,.09); }
-    select option { background: #101c23; }
-    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .check { display: flex; align-items: center; gap: 8px; color: var(--ink); }
-    .check input { width: auto; margin: 0; }
+    input::placeholder { color: #b5bdc9; }
+    input:hover, select:hover { border-color: #aab4c3; }
+    input:focus, select:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(22, 119, 255, .11); }
+    input:disabled, select:disabled { color: var(--subtle); background: #f5f6f8; cursor: not-allowed; }
+    .amount-input { position: relative; }
+    .amount-input::before {
+      content: "¥";
+      position: absolute;
+      left: 11px;
+      top: 50%;
+      z-index: 1;
+      color: var(--navy);
+      font-weight: 700;
+      transform: translateY(-50%);
+    }
+    .amount-input input { padding-left: 28px; font-weight: 700; font-variant-numeric: tabular-nums; }
+    .field-help { display: block; margin-top: 5px; color: var(--subtle); font-size: 11px; }
+
+    .advanced {
+      margin: 3px 0 17px;
+      border-top: 1px solid var(--line);
+      border-bottom: 1px solid var(--line);
+    }
+    .advanced summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 0;
+      color: #475467;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      list-style: none;
+    }
+    .advanced summary::-webkit-details-marker { display: none; }
+    .advanced summary::after { content: "+"; color: var(--brand); font-size: 18px; font-weight: 400; line-height: 1; }
+    .advanced[open] summary::after { content: "−"; }
+    .advanced summary span { margin-right: auto; color: var(--subtle); font-size: 11px; font-weight: 400; }
+    .advanced-content { padding: 3px 0 14px; }
+    .check-line { display: flex; align-items: flex-start; gap: 8px; margin: 2px 0 0; color: #475467; font-size: 12px; font-weight: 400; }
+    .check-line input { width: 15px; height: 15px; margin: 2px 0 0; accent-color: var(--brand); }
+
     button {
-      border: 1px solid var(--line); color: var(--ink); background: rgba(255,255,255,.06);
-      border-radius: 9px; padding: 9px 12px; cursor: pointer; transition: .15s ease;
+      min-height: 36px;
+      padding: 7px 13px;
+      color: #344054;
+      background: #fff;
+      border: 1px solid var(--line-strong);
+      border-radius: 5px;
+      cursor: pointer;
+      transition: color .15s ease, background-color .15s ease, border-color .15s ease;
     }
-    button:hover { transform: translateY(-1px); border-color: rgba(255,255,255,.25); }
-    button:disabled { opacity: .4; cursor: not-allowed; transform: none; }
-    button.primary { width: 100%; background: var(--mint); border-color: var(--mint); color: #072019; font-weight: 800; padding: 11px; }
-    button.danger { color: var(--red); }
-    .actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 6px; }
-    .account { display: flex; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--line); }
-    .account:last-child { border: 0; }
-    .account span { color: var(--muted); }
-    .payment-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; }
-    .payment-id { color: var(--muted); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; font-size: 12px; overflow-wrap: anywhere; }
-    .badge { padding: 5px 9px; border-radius: 99px; font-size: 11px; font-weight: 800; letter-spacing: .04em; background: rgba(112,165,255,.12); color: var(--blue); }
-    .badge.SUCCESS { color: var(--mint); background: rgba(92,225,183,.12); }
-    .badge.FAILED { color: var(--red); background: rgba(255,126,135,.12); }
-    .badge.CLOSED { color: var(--muted); }
-    .empty { color: var(--muted); border: 1px dashed var(--line); border-radius: 12px; padding: 30px 16px; text-align: center; }
-    .timeline { margin-top: 15px; }
-    .event { display: grid; grid-template-columns: 30px 1fr; gap: 10px; position: relative; padding-bottom: 15px; }
-    .event:not(:last-child)::before { content: ""; position: absolute; left: 14px; top: 25px; bottom: 0; width: 1px; background: var(--line); }
-    .event-seq { height: 29px; width: 29px; display: grid; place-items: center; border-radius: 50%; border: 1px solid var(--line); color: var(--muted); font-size: 10px; background: #0d181f; z-index: 1; }
-    .event-title { font-weight: 700; font-size: 12px; }
-    .event-message, .event-time { color: var(--muted); font-size: 11px; }
-    .notice { min-height: 22px; margin-top: 10px; color: var(--mint); font-size: 12px; }
-    .notice.error { color: var(--red); }
-    code { color: var(--blue); }
-    footer { display: flex; justify-content: space-between; gap: 12px; color: var(--muted); font-size: 11px; margin-top: 18px; }
-    @media (max-width: 850px) { .stats { grid-template-columns: 1fr 1fr; } .layout { grid-template-columns: 1fr; } }
-    @media (max-width: 520px) { header { display: block; } .health { margin-top: 16px; width: fit-content; } .stats { grid-template-columns: 1fr; } .row { grid-template-columns: 1fr; } }
+    button:hover:not(:disabled) { color: var(--brand-hover); border-color: #91caff; background: #f7fbff; }
+    button:focus-visible, summary:focus-visible { outline: 3px solid rgba(22, 119, 255, .2); outline-offset: 2px; }
+    button:disabled { color: #a8b0bd; background: #f5f6f8; border-color: #e5e8ed; cursor: not-allowed; }
+    button.primary { color: #fff; background: var(--brand); border-color: var(--brand); font-weight: 700; }
+    button.primary:hover:not(:disabled) { color: #fff; background: var(--brand-hover); border-color: var(--brand-hover); }
+    button.danger { color: var(--danger); }
+    button.danger:hover:not(:disabled) { color: var(--danger); background: var(--danger-soft); border-color: #ffa3a8; }
+    .create-button { width: 100%; height: 42px; }
+
+    .notice {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      margin-top: 13px;
+      padding: 10px 11px;
+      color: #245f49;
+      background: var(--success-soft);
+      border: 1px solid #b7e6d2;
+      border-radius: 5px;
+      font-size: 12px;
+    }
+    .notice::before { content: ""; width: 6px; height: 6px; margin-top: 6px; flex: 0 0 auto; background: var(--success); border-radius: 50%; }
+    .notice.info { color: #245386; background: #eff6ff; border-color: #c9e0ff; }
+    .notice.info::before { background: var(--brand); }
+    .notice.error { color: #8f2630; background: var(--danger-soft); border-color: #ffc6c9; }
+    .notice.error::before { background: var(--danger); }
+    .context-note { display: grid; grid-template-columns: auto 1fr; gap: 8px; margin-top: 16px; color: var(--muted); font-size: 11px; }
+    .context-note strong { color: #475467; }
+
+    .detail-body { padding: 0 22px 22px; }
+    .empty-state { padding: 74px 24px 78px; text-align: center; }
+    .empty-rule { width: 42px; height: 3px; margin: 0 auto 17px; background: var(--brand); border-radius: 2px; }
+    .empty-state strong { display: block; color: var(--navy); font-size: 15px; }
+    .empty-state p { margin: 6px auto 0; max-width: 340px; color: var(--muted); font-size: 12px; }
+
+    .payment-summary {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px 24px;
+      padding: 22px 0 19px;
+      border-bottom: 1px solid var(--line);
+    }
+    .payment-order-label { color: var(--subtle); font-size: 11px; }
+    .payment-order { margin-top: 3px; color: var(--navy); font-size: 16px; font-weight: 700; overflow-wrap: anywhere; }
+    .payment-amount { grid-column: 1 / -1; display: flex; align-items: baseline; gap: 7px; }
+    .payment-amount span { color: var(--muted); font-size: 12px; }
+    .payment-amount strong { color: var(--navy); font-size: 30px; line-height: 1; letter-spacing: -.035em; font-variant-numeric: tabular-nums; }
+    .status-tag {
+      align-self: start;
+      padding: 4px 9px;
+      color: #355c88;
+      background: #edf5ff;
+      border: 1px solid #cfe3ff;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .status-tag.SUCCESS { color: var(--success); background: var(--success-soft); border-color: #b7e6d2; }
+    .status-tag.FAILED { color: var(--danger); background: var(--danger-soft); border-color: #ffc6c9; }
+    .status-tag.CLOSED { color: #667085; background: #f4f5f7; border-color: #dfe3e8; }
+    .status-tag.PROCESSING { color: var(--warning); background: var(--warning-soft); border-color: #f5d69f; }
+
+    .detail-grid { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid var(--line); }
+    .detail-item { min-width: 0; padding: 14px 12px 14px 0; }
+    .detail-item:nth-child(even) { padding-left: 18px; border-left: 1px solid var(--line); }
+    .detail-item span { display: block; color: var(--subtle); font-size: 11px; }
+    .detail-item strong { display: block; margin-top: 4px; color: #344054; font-size: 12px; font-weight: 600; overflow-wrap: anywhere; }
+    .mono { font-family: "Cascadia Mono", "SFMono-Regular", Consolas, monospace; font-size: 11px !important; font-weight: 500 !important; }
+    .failure-text { color: var(--danger) !important; }
+
+    .operation-section { padding: 17px 0; border-bottom: 1px solid var(--line); }
+    .operation-heading, .timeline-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+    h3 { margin: 0; color: var(--navy); font-size: 14px; }
+    .operation-heading p { margin: 2px 0 0; color: var(--subtle); font-size: 11px; }
+    .action-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .action-row .primary { min-width: 96px; }
+
+    .verification { border-bottom: 1px solid var(--line); }
+    .verification summary {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 0;
+      color: #344054;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      list-style: none;
+    }
+    .verification summary::-webkit-details-marker { display: none; }
+    .verification summary::before { content: "+"; color: var(--brand); font-size: 17px; font-weight: 400; }
+    .verification[open] summary::before { content: "−"; }
+    .verification summary span { color: var(--subtle); font-size: 11px; font-weight: 400; }
+    .verification-body { padding: 0 0 16px; }
+    .verification-body p { margin: 0 0 10px; color: var(--muted); font-size: 11px; }
+
+    .timeline-section { padding-top: 18px; }
+    .timeline-heading span { color: var(--subtle); font-size: 11px; }
+    .timeline { margin-top: 14px; }
+    .event {
+      position: relative;
+      display: grid;
+      grid-template-columns: 24px minmax(0, 1fr);
+      gap: 11px;
+      padding-bottom: 16px;
+    }
+    .event:last-child { padding-bottom: 0; }
+    .event:not(:last-child)::before { content: ""; position: absolute; left: 5px; top: 14px; bottom: 0; width: 1px; background: #d9e0e9; }
+    .event-marker { position: relative; z-index: 1; width: 11px; height: 11px; margin-top: 4px; background: #9abff1; border: 3px solid #eaf3ff; border-radius: 50%; }
+    .event.success .event-marker { background: var(--success); border-color: var(--success-soft); }
+    .event.warning .event-marker { background: var(--warning); border-color: var(--warning-soft); }
+    .event.danger .event-marker { background: var(--danger); border-color: var(--danger-soft); }
+    .event-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+    .event-head strong { color: #344054; font-size: 12px; }
+    .event-head time { color: var(--subtle); font-size: 10px; white-space: nowrap; }
+    .event p { margin: 2px 0 0; color: var(--muted); font-size: 11px; }
+    .transition { display: inline-block; margin-top: 4px; color: #496b94; background: #f2f7fd; padding: 1px 6px; border-radius: 3px; font-size: 10px; }
+
+    .footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      margin-top: 18px;
+      color: var(--subtle);
+      font-size: 11px;
+    }
+    .ledger-panel { margin-top: 18px; }
+    .ledger-panel .surface-head { align-items: center; justify-content: space-between; }
+    .ledger-title { display: flex; align-items: flex-start; gap: 12px; }
+    .ledger-count { color: var(--subtle); font-size: 11px; white-space: nowrap; }
+    .table-wrap { overflow-x: auto; }
+    .ledger-table { width: 100%; border-collapse: collapse; text-align: left; }
+    .ledger-table th {
+      padding: 10px 16px;
+      color: var(--subtle);
+      background: #fafbfc;
+      border-bottom: 1px solid var(--line);
+      font-size: 11px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .ledger-table td {
+      padding: 12px 16px;
+      color: #475467;
+      border-bottom: 1px solid var(--line);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+    .ledger-table tbody tr:last-child td { border-bottom: 0; }
+    .ledger-table .amount-cell { color: var(--navy); font-weight: 700; text-align: right; font-variant-numeric: tabular-nums; }
+    .ledger-table th:last-child { text-align: right; }
+    .ledger-status { color: var(--success); font-size: 11px; font-weight: 700; }
+    .ledger-empty { padding: 24px; color: var(--muted); text-align: center; font-size: 12px; }
+    .footer-meta { display: flex; flex-wrap: wrap; gap: 8px 18px; }
+    .reset-button { min-height: 32px; padding: 5px 10px; font-size: 11px; }
+
+    @media (max-width: 980px) {
+      .overview { grid-template-columns: 1fr; }
+      .balance-summary { border-right: 0; border-bottom: 1px solid var(--line); }
+      .content-grid { grid-template-columns: 350px minmax(0, 1fr); }
+      .metric { padding: 18px; }
+    }
+    @media (max-width: 820px) {
+      .content-grid { grid-template-columns: 1fr; }
+      .transaction-create { order: 1; }
+      .transaction-detail { order: 2; }
+    }
+    @media (max-width: 620px) {
+      .app-header { height: 58px; }
+      .header-inner, .workspace { width: min(100% - 24px, 1200px); }
+      .brand-copy span { display: none; }
+      .workspace { padding-top: 22px; }
+      .page-heading { display: block; }
+      .runtime { margin-top: 14px; padding: 9px 0 9px 12px; }
+      .metric-list { grid-template-columns: 1fr 1fr; }
+      .metric:nth-child(2) { border-right: 0; }
+      .metric:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
+      .balance-meta { gap: 18px; }
+      .field-row, .detail-grid { grid-template-columns: 1fr; }
+      .detail-item:nth-child(even) { padding-left: 0; border-left: 0; }
+      .detail-item { border-bottom: 1px solid var(--line); }
+      .detail-item:last-child { border-bottom: 0; }
+      .event-head { display: block; }
+      .event-head time { display: block; margin-top: 1px; }
+      .footer { align-items: flex-start; }
+      .ledger-table th, .ledger-table td { padding-left: 12px; padding-right: 12px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
+    }
   </style>
 </head>
 <body>
-  <main class="shell">
-    <header>
-      <div>
-        <div class="eyebrow">Local consistency playground</div>
-        <h1>PayFlow Lab</h1>
-        <p>用一个可观察的 Go 支付实验系统，演示请求幂等、资金冻结、DTM TCC、账本唯一落账，以及重复与乱序回调保护。</p>
-      </div>
-      <div class="health"><i id="healthDot" class="dot"></i><span id="healthText">连接中</span></div>
-    </header>
+  <a class="skip-link" href="#workspace">跳转到交易工作台</a>
 
-    <section class="stats">
-      <div class="stat"><span>支付单</span><strong id="metricPayments">—</strong></div>
-      <div class="stat"><span>成功落账</span><strong id="metricLedger">—</strong></div>
-      <div class="stat"><span>幂等重放</span><strong id="metricReplay">—</strong></div>
-      <div class="stat"><span>被保护的回调</span><strong id="metricProtected">—</strong></div>
+  <header class="app-header">
+    <div class="header-inner">
+      <div class="brand" aria-label="PayFlow 支付账务中心">
+        <span class="brand-mark" aria-hidden="true">P</span>
+        <div class="brand-copy"><strong>PayFlow</strong><span>支付账务中心</span></div>
+      </div>
+      <div class="service-state" aria-live="polite">
+        <i id="healthDot" class="service-dot" aria-hidden="true"></i>
+        <span id="healthText">正在连接服务</span>
+      </div>
+    </div>
+  </header>
+
+  <main id="workspace" class="workspace" aria-busy="true">
+    <section class="page-heading" aria-labelledby="pageTitle">
+      <div>
+        <div class="kicker">Trade Operations</div>
+        <h1 id="pageTitle">支付交易工作台</h1>
+        <p>创建交易、核对资金变化，并验证支付链路的幂等与故障恢复。</p>
+      </div>
+      <div class="runtime">
+        <span>当前运行环境</span>
+        <strong id="runtimeMode">正在读取运行模式</strong>
+      </div>
     </section>
 
-    <section class="layout">
-      <div>
-        <div class="panel">
-          <h2>发起支付</h2>
-          <p id="modeHint" class="hint">正在读取运行模式…</p>
-          <form id="paymentForm">
-            <label>业务订单号<input id="orderId" required maxlength="128"></label>
-            <div class="row">
-              <label>付款账户<input id="accountId" value="demo-user" required></label>
-              <label>金额（分）<input id="amount" type="number" min="1" value="1999" required></label>
-            </div>
-            <label>幂等键<input id="idempotencyKey" required></label>
-            <label>故障注入
-              <select id="fault">
-                <option value="">无故障</option>
-              </select>
-            </label>
-            <label id="autoConfirmLabel" class="check"><input id="autoConfirm" type="checkbox"> 创建后自动模拟成功回调</label>
-            <button class="primary" type="submit">创建支付单</button>
-          </form>
-          <div id="notice" class="notice"></div>
-        </div>
-
-        <div class="panel">
-          <h2>账户与账本</h2>
-          <div class="account"><span>可用余额</span><strong id="available">—</strong></div>
-          <div class="account"><span>冻结余额</span><strong id="frozen">—</strong></div>
-          <div class="account"><span>账本条数</span><strong id="ledgerCount">—</strong></div>
+    <section id="overview" class="overview" aria-label="账户与交易概览" aria-busy="true">
+      <div class="balance-summary">
+        <div class="summary-label">演示账户 · demo-user</div>
+        <div class="balance-line"><span class="currency">¥</span><strong id="available">—</strong></div>
+        <div class="balance-meta">
+          <span>冻结金额<strong id="frozen">—</strong></span>
+          <span>账本记录<strong id="ledgerCount">—</strong></span>
         </div>
       </div>
+      <div class="metric-list">
+        <div class="metric"><span>累计支付单</span><strong id="metricPayments">—</strong><small>已受理交易</small></div>
+        <div class="metric"><span>成功落账</span><strong id="metricLedger">—</strong><small>唯一账本记录</small></div>
+        <div class="metric"><span>幂等重放</span><strong id="metricReplay">—</strong><small>重复请求拦截</small></div>
+        <div class="metric"><span>回调保护</span><strong id="metricProtected">—</strong><small>重复 / 乱序 / 终态</small></div>
+      </div>
+    </section>
 
-      <div>
-        <div class="panel">
-          <h2>当前支付</h2>
-          <p class="hint">按钮会按当前状态和回调历史启用；先产生成功/失败回调，再演示重复、乱序和终态保护。</p>
-          <div id="paymentEmpty" class="empty">创建一笔支付，开始观察状态机。</div>
-          <div id="paymentView" hidden>
-            <div class="payment-head">
-              <div>
-                <div id="paymentOrder"></div>
-                <div id="paymentId" class="payment-id"></div>
+    <section class="content-grid" aria-label="支付操作区">
+      <aside class="surface transaction-create">
+        <div class="surface-head">
+          <span class="section-index" aria-hidden="true">01</span>
+          <div><h2>新建支付</h2><p>录入业务信息并提交支付请求</p></div>
+        </div>
+        <div class="form-body">
+          <form id="paymentForm">
+            <div class="field">
+              <label for="orderId">业务订单号</label>
+              <input id="orderId" name="order_id" required maxlength="128" autocomplete="off" spellcheck="false">
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label for="accountId">付款账户</label>
+                <input id="accountId" name="account_id" value="demo-user" required maxlength="128" autocomplete="off" spellcheck="false">
               </div>
-              <span id="paymentStatus" class="badge"></span>
+              <div class="field">
+                <label for="amount">支付金额（元）</label>
+                <div class="amount-input"><input id="amount" name="amount" type="number" min="0.01" max="1000000" step="0.01" value="19.99" inputmode="decimal" required></div>
+              </div>
             </div>
-            <div class="account"><span>金额</span><strong id="paymentAmount"></strong></div>
-            <div id="paymentGidRow" class="account" hidden><span>DTM GID</span><strong id="paymentGid" class="payment-id"></strong></div>
-            <div class="account"><span>最后回调序号</span><strong id="lastSequence"></strong></div>
-            <div class="actions">
-              <button id="successButton">成功回调</button>
-              <button id="failureButton" class="danger">失败回调</button>
-              <button id="confirmFaultButton">Confirm 前故障</button>
-              <button id="duplicateButton">重复回调</button>
-              <button id="outOfOrderButton">乱序回调</button>
-              <button id="terminalButton">终态回退尝试</button>
-              <button id="closeButton">关闭支付</button>
+            <div class="field">
+              <label for="fault">交易场景</label>
+              <select id="fault" name="fault"><option value="">正常支付</option></select>
+              <small class="field-help">故障场景仅用于验证资金补偿，不影响其他交易。</small>
             </div>
-            <div id="timeline" class="timeline"></div>
+
+            <details class="advanced">
+              <summary>请求配置 <span>幂等与自动回调</span></summary>
+              <div class="advanced-content">
+                <div class="field">
+                  <label for="idempotencyKey">幂等键</label>
+                  <input id="idempotencyKey" name="idempotency_key" class="mono" required maxlength="128" autocomplete="off" spellcheck="false">
+                </div>
+                <label id="autoConfirmLabel" class="check-line" for="autoConfirm">
+                  <input id="autoConfirm" name="auto_confirm" type="checkbox">
+                  <span>创建后自动模拟渠道成功回调</span>
+                </label>
+              </div>
+            </details>
+
+            <button id="createButton" class="primary create-button" type="submit">提交支付请求</button>
+          </form>
+          <div id="notice" class="notice" role="status" aria-live="polite" hidden></div>
+          <div class="context-note"><strong>模式说明</strong><span id="modeHint">正在读取服务能力…</span></div>
+        </div>
+      </aside>
+
+      <section class="surface transaction-detail" aria-labelledby="detailTitle">
+        <div class="surface-head">
+          <span class="section-index" aria-hidden="true">02</span>
+          <div><h2 id="detailTitle">交易详情</h2><p>以订单、金额、状态和资金事件为核对主线</p></div>
+        </div>
+        <div class="detail-body">
+          <div id="paymentEmpty" class="empty-state">
+            <div class="empty-rule" aria-hidden="true"></div>
+            <strong>暂无可展示的交易</strong>
+            <p>提交一笔支付后，这里会展示交易状态、业务流水和完整资金进度。</p>
+          </div>
+
+          <div id="paymentView" hidden>
+            <div class="payment-summary">
+              <div>
+                <div class="payment-order-label">业务订单号</div>
+                <div id="paymentOrder" class="payment-order"></div>
+              </div>
+              <span id="paymentStatus" class="status-tag"></span>
+              <div class="payment-amount"><span>交易金额</span><strong id="paymentAmount"></strong></div>
+            </div>
+
+            <div class="detail-grid">
+              <div class="detail-item"><span>支付流水号</span><strong id="paymentId" class="mono"></strong></div>
+              <div class="detail-item"><span>付款账户</span><strong id="paymentAccount"></strong></div>
+              <div class="detail-item"><span>创建时间</span><strong id="paymentCreatedAt"></strong></div>
+              <div class="detail-item"><span>执行模式</span><strong id="paymentMode"></strong></div>
+              <div class="detail-item"><span>最后回调序号</span><strong id="lastSequence"></strong></div>
+              <div id="paymentGidRow" class="detail-item" hidden><span>全局事务号（GID）</span><strong id="paymentGid" class="mono"></strong></div>
+              <div id="paymentFailureRow" class="detail-item" hidden><span>失败原因</span><strong id="paymentFailure" class="failure-text"></strong></div>
+            </div>
+
+            <section class="operation-section" aria-labelledby="channelActionTitle">
+              <div class="operation-heading">
+                <div><h3 id="channelActionTitle">渠道处理</h3><p>仅处理中交易可接收成功、失败或关闭指令</p></div>
+              </div>
+              <div class="action-row">
+                <button id="successButton" class="primary" type="button" disabled>支付成功</button>
+                <button id="failureButton" type="button" disabled>支付失败</button>
+                <button id="closeButton" class="danger" type="button" disabled>关闭交易</button>
+              </div>
+            </section>
+
+            <details class="verification">
+              <summary>异常验证 <span>幂等、重试、乱序与终态保护</span></summary>
+              <div class="verification-body">
+                <p>以下操作只用于验证系统保护机制，执行结果会进入交易进度。</p>
+                <div class="action-row">
+                  <button id="replayCreateButton" type="button" disabled>重放创建请求</button>
+                  <button id="confirmFaultButton" type="button" disabled>Confirm 前故障</button>
+                  <button id="duplicateButton" type="button" disabled>重复回调</button>
+                  <button id="outOfOrderButton" type="button" disabled>乱序回调</button>
+                  <button id="terminalButton" type="button" disabled>终态回退</button>
+                </div>
+              </div>
+            </details>
+
+            <section class="timeline-section" aria-labelledby="timelineTitle">
+              <div class="timeline-heading"><h3 id="timelineTitle">交易进度</h3><span id="eventCount">0 条记录</span></div>
+              <div id="timeline" class="timeline" aria-live="polite"></div>
+            </section>
           </div>
         </div>
+      </section>
+    </section>
+
+    <section class="surface ledger-panel" aria-labelledby="ledgerTitle">
+      <div class="surface-head">
+        <div class="ledger-title">
+          <span class="section-index" aria-hidden="true">03</span>
+          <div><h2 id="ledgerTitle">最近账本</h2><p>仅展示已确认并完成唯一落账的资金记录</p></div>
+        </div>
+        <span id="ledgerSummary" class="ledger-count">共 0 条</span>
+      </div>
+      <div class="table-wrap">
+        <table class="ledger-table">
+          <thead>
+            <tr><th>落账时间</th><th>账本编号</th><th>支付流水号</th><th>账户</th><th>状态</th><th>金额</th></tr>
+          </thead>
+          <tbody id="ledgerBody"></tbody>
+        </table>
+        <div id="ledgerEmpty" class="ledger-empty">暂无落账记录</div>
       </div>
     </section>
-    <footer><span id="runtimeMode">默认端口 8081 · 读取模式中</span><button id="resetButton" class="danger">重置实验数据</button></footer>
+
+    <footer class="footer">
+      <div class="footer-meta"><span>数据仅用于本地支付链路验证</span><span>最近刷新：<time id="lastUpdated">—</time></span></div>
+      <button id="resetButton" class="danger reset-button" type="button">重置演示数据</button>
+    </footer>
   </main>
 
   <script>
-    const state = { paymentId: "", lastEventId: "", lastEventSequence: 0, mode: "memory" };
+    const state = {
+      paymentId: "",
+      currentPayment: null,
+      lastEventId: "",
+      lastEventSequence: 0,
+      lastCreatePayload: null,
+      lastIdempotencyKey: "",
+      mode: "memory",
+      busy: false
+    };
+
     const byId = id => document.getElementById(id);
-    const money = cents => new Intl.NumberFormat("zh-CN", { style: "currency", currency: "CNY" }).format(cents / 100);
-    const unique = prefix => `${prefix}_${Date.now()}_${Math.random().toString(16).slice(2, 8)}`;
+    const money = cents => new Intl.NumberFormat("zh-CN", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(cents || 0) / 100);
+    const dateTime = value => value ? new Intl.DateTimeFormat("zh-CN", {
+      year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false
+    }).format(new Date(value)) : "—";
+
+    const statusLabels = {
+      INIT: "待处理",
+      PROCESSING: "处理中",
+      SUCCESS: "支付成功",
+      FAILED: "支付失败",
+      CLOSED: "已关闭"
+    };
+
+    const eventLabels = {
+      PAYMENT_CREATED: "支付请求已受理",
+      STATUS_CHANGED: "交易状态已更新",
+      FUNDS_FROZEN: "账户资金已冻结",
+      FUNDS_CONFIRMED: "资金确认并落账",
+      FUNDS_RELEASED: "冻结资金已释放",
+      CALLBACK_ACCEPTED: "渠道回调已受理",
+      CALLBACK_DUPLICATE: "重复回调已拦截",
+      CALLBACK_OUT_OF_ORDER: "乱序回调已拦截",
+      CALLBACK_TERMINAL_IGNORED: "终态回调已拦截",
+      FAULT_INJECTED: "模拟故障已触发",
+      DTM_TCC_STARTED: "分布式事务已启动",
+      DTM_TCC_ABORTED: "分布式事务已回滚",
+      DTM_RECONCILE_PENDING: "等待事务对账"
+    };
+
+    const eventMessages = {
+      "payment accepted with an idempotency key": "支付请求已受理，幂等键已登记。",
+      "distributed payment persisted with a MySQL idempotency key": "支付请求已持久化，幂等键已登记。",
+      "payment entered processing": "支付进入处理中状态。",
+      "account funds reserved in local TCC Try": "账户资金冻结完成，等待渠道结果。",
+      "DTM global TCC transaction prepared": "全局 TCC 事务已创建，资金分支开始执行。",
+      "DTM aborted the global transaction and requested Cancel": "全局事务执行失败，系统已发起 Cancel 补偿。",
+      "DTM TCC Cancel completed; no POSTED ledger entry is valid": "Cancel 补偿已完成，资金已释放且没有生成有效账本。",
+      "DTM confirmed account and ledger branches through BranchBarrier": "账户与账本分支均已确认，支付完成且仅落账一次。",
+      "DTM abort was accepted, but Cancel completion is not yet proven; payment remains PROCESSING": "全局事务已受理回滚，正在核对各分支的补偿结果。",
+      "DTM accepted submit; participant confirmation is still being reconciled": "全局事务已提交，正在核对各分支的确认结果。",
+      "external callback ignored because DTM payment is terminal": "交易已由分布式事务完成，本次外部回调未改变终态。",
+      "reconciler observed all DTM Confirm branches": "对账任务确认所有分支均已完成 Confirm。",
+      "reconciler observed DTM Cancel completion": "对账任务确认所有分支均已完成 Cancel。",
+      "channel callback passed duplicate and ordering checks": "渠道回调通过重复与顺序校验。",
+      "frozen funds committed and one ledger entry created": "冻结资金已确认，并生成唯一账本记录。",
+      "callback applied": "渠道结果已更新到支付状态。",
+      "event id was already processed": "相同事件号已处理，本次请求未重复执行。",
+      "callback sequence did not advance": "回调序号未推进，本次请求已忽略。",
+      "terminal payment state is immutable": "交易已进入终态，本次状态回退已忽略。",
+      "failure injected before local Try": "已在资金冻结前触发模拟故障。",
+      "failure injected after local Try": "已在资金冻结后触发故障，并执行资金释放。",
+      "retryable failure injected before local Confirm": "Confirm 前发生可重试故障，交易状态保持不变。"
+    };
+
+    function humanFailureReason(reason) {
+      const value = String(reason || "").trim();
+      if (!value) return "";
+      if (/DTM TCC cancelled/i.test(value)) return "账本分支执行失败，TCC 已完成回滚补偿。";
+      if (/DTM global transaction failed/i.test(value)) return "全局事务执行失败，系统已完成资金补偿。";
+      if (/injected failure after funds freeze/i.test(value)) return "资金冻结后触发模拟故障，本地 Cancel 已释放冻结金额。";
+      return value;
+    }
 
     async function api(path, options = {}) {
-      const response = await fetch(path, { headers: { "Content-Type": "application/json", ...(options.headers || {}) }, ...options });
-      const payload = await response.json().catch(() => ({ success: false, error: { message: "响应不是 JSON" } }));
-      if (!response.ok || !payload.success) throw new Error(payload.error?.message || `HTTP ${response.status}`);
+      const response = await fetch(path, {
+        ...options,
+        headers: { "Content-Type": "application/json", ...(options.headers || {}) }
+      });
+      const payload = await response.json().catch(() => ({ success: false, error: { code: "invalid_response", message: "响应格式异常" } }));
+      if (!response.ok || !payload.success) {
+        const error = new Error(payload.error?.message || `请求失败（HTTP ${response.status}）`);
+        error.code = payload.error?.code || "request_failed";
+        throw error;
+      }
       return payload.data;
     }
 
+    function unique(prefix) {
+      const now = new Date();
+      const stamp = [
+        now.getFullYear(),
+        String(now.getMonth() + 1).padStart(2, "0"),
+        String(now.getDate()).padStart(2, "0"),
+        String(now.getHours()).padStart(2, "0"),
+        String(now.getMinutes()).padStart(2, "0"),
+        String(now.getSeconds()).padStart(2, "0")
+      ].join("");
+      return `${prefix}${stamp}${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+    }
+
     function freshKeys() {
-      byId("orderId").value = unique("order");
-      byId("idempotencyKey").value = unique("idem");
+      byId("orderId").value = unique("ORD");
+      byId("idempotencyKey").value = `idem_${unique("").toLowerCase()}`;
+    }
+
+    function humanError(error) {
+      const messages = {
+        not_found: "未找到对应交易，请刷新后重试。",
+        idempotency_conflict: "该幂等键已绑定其他请求，请更换幂等键。",
+        invalid_transition: "当前交易状态不允许执行此操作。",
+        dependency_unavailable: "依赖服务暂时不可用，请检查运行环境。",
+        distributed_mode_required: "当前操作需要分布式运行模式。"
+      };
+      if (messages[error.code]) return messages[error.code];
+      if (/insufficient funds/i.test(error.message)) return "账户可用余额不足。";
+      if (/injected fault/i.test(error.message)) return "已触发模拟故障，系统保留当前状态以便重试。";
+      return error.message || "操作未完成，请稍后重试。";
+    }
+
+    function notify(message, type = "success") {
+      const notice = byId("notice");
+      notice.textContent = message;
+      notice.className = `notice${type === "success" ? "" : ` ${type}`}`;
+      notice.hidden = !message;
+      notice.setAttribute("role", type === "error" ? "alert" : "status");
+    }
+
+    function setBusy(busy, activeButton) {
+      state.busy = busy;
+      byId("workspace").setAttribute("aria-busy", String(busy));
+      document.querySelectorAll("button").forEach(button => { button.disabled = busy; });
+      if (activeButton) {
+        if (busy) {
+          activeButton.dataset.label = activeButton.textContent;
+          activeButton.textContent = "处理中…";
+        } else if (activeButton.dataset.label) {
+          activeButton.textContent = activeButton.dataset.label;
+          delete activeButton.dataset.label;
+        }
+      }
+      if (!busy) syncControls();
+    }
+
+    async function perform(button, action) {
+      if (state.busy) return;
+      setBusy(true, button);
+      try {
+        await action();
+      } catch (error) {
+        notify(humanError(error), "error");
+      } finally {
+        setBusy(false, button);
+      }
+    }
+
+    function syncControls() {
+      byId("createButton").disabled = state.busy;
+      byId("resetButton").disabled = state.busy;
+      const payment = state.currentPayment;
+      const processing = Boolean(payment) && payment.status === "PROCESSING" && state.mode === "memory" && !state.busy;
+      const terminal = Boolean(payment) && ["SUCCESS", "FAILED", "CLOSED"].includes(payment.status) && !state.busy;
+      byId("successButton").disabled = !processing;
+      byId("failureButton").disabled = !processing;
+      byId("confirmFaultButton").disabled = !processing;
+      byId("closeButton").disabled = !processing;
+      byId("replayCreateButton").disabled = state.busy || !state.lastCreatePayload || !state.lastIdempotencyKey;
+      byId("duplicateButton").disabled = state.busy || !state.lastEventId || state.lastEventSequence <= 0;
+      byId("outOfOrderButton").disabled = state.busy || !payment || payment.last_callback_sequence <= 0;
+      byId("terminalButton").disabled = !terminal;
     }
 
     async function configureMode() {
@@ -196,173 +842,327 @@
       state.mode = system.mode;
       const distributed = state.mode === "distributed";
       const faultSelect = byId("fault");
-      faultSelect.replaceChildren();
       const choices = distributed
-        ? [["", "无故障"], ["after_account_try", "账户 Try 后中断 → DTM Cancel"], ["ledger_try", "账本 Try 失败 → DTM Cancel"]]
-        : [["", "无故障"], ["before_freeze", "Try 前失败"], ["after_freeze", "Try 后失败并 Cancel"]];
-      choices.forEach(([value, label]) => {
-        const option = document.createElement("option"); option.value = value; option.textContent = label; faultSelect.append(option);
-      });
+        ? [["", "正常支付"], ["after_account_try", "账户冻结后中断（触发补偿）"], ["ledger_try", "账本写入失败（触发补偿）"]]
+        : [["", "正常支付"], ["before_freeze", "资金冻结前失败"], ["after_freeze", "资金冻结后失败（触发补偿）"]];
+      faultSelect.replaceChildren(...choices.map(([value, label]) => {
+        const option = document.createElement("option");
+        option.value = value;
+        option.textContent = label;
+        return option;
+      }));
+      byId("runtimeMode").textContent = distributed ? "Distributed · MySQL / Redis / DTM TCC" : "Memory · 单机事务模式";
       byId("modeHint").textContent = distributed
-        ? "真实 DTM TCC 模式：MySQL 持久化，Redis 幂等快路径，两个独立 participant；初始账户 ¥10,000.00。"
-        : "内存学习模式：无 Docker、无外部依赖；初始账户 demo-user 有 ¥10,000.00。";
-      byId("runtimeMode").textContent = distributed
-        ? "默认端口 8081 · Distributed · MySQL + Redis + DTM 1.19.0"
-        : "默认端口 8081 · Memory Store · 无外部依赖";
+        ? "分布式模式会执行真实 TCC 协调；交易提交后可直接核对最终状态和资金事件。"
+        : "单机模式保留手动渠道回调，便于逐步观察冻结、确认与补偿过程。";
       byId("autoConfirm").disabled = distributed;
       byId("autoConfirm").checked = false;
-      byId("autoConfirmLabel").style.opacity = distributed ? ".45" : "1";
+      byId("autoConfirmLabel").title = distributed ? "分布式模式由 TCC 流程直接完成交易" : "";
     }
 
-    function notify(message, error = false) {
-      byId("notice").textContent = message;
-      byId("notice").className = `notice${error ? " error" : ""}`;
+    function markUpdated() {
+      byId("lastUpdated").textContent = new Intl.DateTimeFormat("zh-CN", {
+        hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false
+      }).format(new Date());
     }
 
     async function refreshSummary() {
       const [health, metrics, account, ledger] = await Promise.all([
-        api("/healthz"), api("/api/v1/metrics"), api("/api/v1/accounts/demo-user"), api("/api/v1/ledger")
+        api("/healthz"),
+        api("/api/v1/metrics"),
+        api("/api/v1/accounts/demo-user"),
+        api("/api/v1/ledger")
       ]);
-      byId("healthDot").classList.add("ok");
-      byId("healthText").textContent = `${health.status} · ${health.mode}`;
+      byId("healthDot").className = "service-dot ok";
+      byId("healthText").textContent = `服务正常 · ${health.mode === "distributed" ? "分布式" : "单机"}`;
       byId("metricPayments").textContent = metrics.payments_total;
       byId("metricLedger").textContent = metrics.ledger_entries;
       byId("metricReplay").textContent = metrics.idempotent_replays_total;
       byId("metricProtected").textContent = metrics.callbacks_duplicate_total + metrics.callbacks_out_of_order_total + metrics.callbacks_terminal_ignored_total;
       byId("available").textContent = money(account.account.available_cents);
-      byId("frozen").textContent = money(account.account.frozen_cents);
-      byId("ledgerCount").textContent = ledger.entries.length;
+      byId("frozen").textContent = `¥${money(account.account.frozen_cents)}`;
+      byId("ledgerCount").textContent = `${ledger.entries.length} 条`;
+      renderLedger(ledger.entries || []);
+      byId("overview").setAttribute("aria-busy", "false");
+      markUpdated();
     }
 
-    async function refreshPayment() {
-      if (!state.paymentId) return;
-      const details = await api(`/api/v1/payments/${state.paymentId}`);
-      const payment = details.payment;
+    function renderLedger(entries) {
+      const body = byId("ledgerBody");
+      const empty = byId("ledgerEmpty");
+      body.replaceChildren();
+      const recent = [...entries]
+        .sort((left, right) => new Date(right.created_at) - new Date(left.created_at))
+        .slice(0, 5);
+      empty.hidden = recent.length > 0;
+      byId("ledgerSummary").textContent = `共 ${entries.length} 条${entries.length > 5 ? " · 显示最近 5 条" : ""}`;
+      recent.forEach(entry => {
+        const row = document.createElement("tr");
+        const values = [
+          dateTime(entry.created_at),
+          entry.id,
+          entry.payment_id,
+          entry.account_id,
+          entry.status === "POSTED" || !entry.status ? "已入账" : entry.status,
+          `${entry.direction === "DEBIT" ? "−" : "+"} ¥${money(entry.amount_cents)}`
+        ];
+        values.forEach((value, index) => {
+          const cell = document.createElement("td");
+          cell.textContent = value;
+          if (index === 1 || index === 2) cell.className = "mono";
+          if (index === 4) cell.className = "ledger-status";
+          if (index === 5) cell.className = "amount-cell";
+          row.append(cell);
+        });
+        body.append(row);
+      });
+    }
+
+    function showPayment(payment) {
+      state.currentPayment = payment;
       byId("paymentEmpty").hidden = true;
       byId("paymentView").hidden = false;
       byId("paymentOrder").textContent = payment.order_id;
       byId("paymentId").textContent = payment.id;
-      byId("paymentStatus").textContent = payment.status;
-      byId("paymentStatus").className = `badge ${payment.status}`;
-      byId("paymentAmount").textContent = money(payment.amount_cents);
+      byId("paymentAccount").textContent = payment.account_id;
+      byId("paymentCreatedAt").textContent = dateTime(payment.created_at);
+      byId("paymentMode").textContent = payment.execution_mode === "distributed" ? "分布式 TCC" : "单机事务";
+      byId("paymentStatus").textContent = statusLabels[payment.status] || payment.status;
+      byId("paymentStatus").className = `status-tag ${payment.status}`;
+      byId("paymentAmount").textContent = `¥${money(payment.amount_cents)}`;
+      byId("lastSequence").textContent = payment.last_callback_sequence ? `第 ${payment.last_callback_sequence} 次` : "尚无回调";
       byId("paymentGidRow").hidden = !payment.gid;
       byId("paymentGid").textContent = payment.gid || "";
-      byId("lastSequence").textContent = payment.last_callback_sequence;
-      setActionStates(payment);
-      renderEvents(details.events);
+      byId("paymentFailureRow").hidden = !payment.failure_reason;
+      byId("paymentFailure").textContent = humanFailureReason(payment.failure_reason);
+      syncControls();
     }
 
-    function setActionStates(payment) {
-      const processing = payment.status === "PROCESSING" && state.mode === "memory";
-      const terminal = ["SUCCESS", "FAILED", "CLOSED"].includes(payment.status);
-      byId("successButton").disabled = !processing;
-      byId("failureButton").disabled = !processing;
-      byId("confirmFaultButton").disabled = !processing;
-      byId("closeButton").disabled = !processing;
-      byId("duplicateButton").disabled = !state.lastEventId || state.lastEventSequence <= 0;
-      byId("outOfOrderButton").disabled = payment.last_callback_sequence <= 0;
-      byId("terminalButton").disabled = !terminal;
+    async function refreshPayment() {
+      if (!state.paymentId) {
+        state.currentPayment = null;
+        byId("paymentEmpty").hidden = false;
+        byId("paymentView").hidden = true;
+        syncControls();
+        return;
+      }
+      const details = await api(`/api/v1/payments/${encodeURIComponent(state.paymentId)}`);
+      showPayment(details.payment);
+      renderEvents(details.events || []);
+      markUpdated();
+    }
+
+    function eventTone(event) {
+      if (["FUNDS_CONFIRMED"].includes(event.type) || event.to === "SUCCESS") return "success";
+      if (["FAULT_INJECTED", "DTM_TCC_ABORTED", "CALLBACK_TERMINAL_IGNORED"].includes(event.type) || event.to === "FAILED") return "danger";
+      if (["CALLBACK_DUPLICATE", "CALLBACK_OUT_OF_ORDER", "FUNDS_RELEASED"].includes(event.type) || event.to === "CLOSED") return "warning";
+      return "";
     }
 
     function renderEvents(events) {
       const timeline = byId("timeline");
       timeline.replaceChildren();
+      byId("eventCount").textContent = `${events.length} 条记录`;
       [...events].reverse().forEach(event => {
-        const item = document.createElement("div"); item.className = "event";
-        const seq = document.createElement("div"); seq.className = "event-seq"; seq.textContent = event.sequence;
+        const item = document.createElement("article");
+        item.className = `event ${eventTone(event)}`.trim();
+        const marker = document.createElement("div");
+        marker.className = "event-marker";
+        marker.setAttribute("aria-hidden", "true");
         const body = document.createElement("div");
-        const title = document.createElement("div"); title.className = "event-title"; title.textContent = event.type;
-        const message = document.createElement("div"); message.className = "event-message"; message.textContent = event.message;
-        const time = document.createElement("div"); time.className = "event-time"; time.textContent = new Date(event.at).toLocaleString("zh-CN");
-        body.append(title, message, time); item.append(seq, body); timeline.append(item);
+        const head = document.createElement("div");
+        head.className = "event-head";
+        const title = document.createElement("strong");
+        title.textContent = eventLabels[event.type] || event.type;
+        const time = document.createElement("time");
+        time.dateTime = event.at;
+        time.textContent = dateTime(event.at);
+        head.append(title, time);
+        const message = document.createElement("p");
+        message.textContent = eventMessages[event.message] || event.message;
+        body.append(head, message);
+        if (event.from || event.to) {
+          const transition = document.createElement("span");
+          transition.className = "transition";
+          transition.textContent = `${statusLabels[event.from] || event.from || "—"} → ${statusLabels[event.to] || event.to || "—"}`;
+          body.append(transition);
+        }
+        item.append(marker, body);
+        timeline.append(item);
       });
+    }
+
+    async function loadLatestPayment() {
+      const data = await api("/api/v1/payments");
+      if (Array.isArray(data.payments) && data.payments.length > 0) {
+        state.paymentId = data.payments[0].id;
+      }
     }
 
     async function refreshAll() {
       await Promise.all([refreshSummary(), refreshPayment()]);
     }
 
-    byId("paymentForm").addEventListener("submit", async event => {
-      event.preventDefault(); notify("处理中…");
-      try {
-        const autoConfirm = byId("autoConfirm").checked;
-        const createPath = state.mode === "distributed" ? "/api/v1/distributed/payments" : "/api/v1/payments";
-        const result = await api(createPath, {
-          method: "POST",
-          headers: { "Idempotency-Key": byId("idempotencyKey").value },
-          body: JSON.stringify({
-            order_id: byId("orderId").value, account_id: byId("accountId").value,
-            amount_cents: Number(byId("amount").value), currency: "CNY",
-            auto_confirm: autoConfirm, fault: byId("fault").value
-          })
-        });
-        if (state.paymentId !== result.payment.id) {
-          state.lastEventId = "";
-          state.lastEventSequence = 0;
-        }
-        state.paymentId = result.payment.id;
-        if (autoConfirm && result.payment.last_callback_sequence === 1) {
-          state.lastEventId = `auto_${result.payment.id}`; state.lastEventSequence = 1;
-        }
-        notify(result.idempotent_replay
-          ? "命中幂等键：返回原支付单，没有重复扣款。"
-          : (state.mode === "distributed" ? `真实 DTM TCC 已执行：${result.payment.status}` : "支付单已创建。"));
-        await refreshAll();
-        if (!result.idempotent_replay) freshKeys();
-      } catch (error) { notify(error.message, true); }
-    });
-
-    async function sendCallback(outcome, options = {}) {
-      if (!state.paymentId) return;
-      const details = await api(`/api/v1/payments/${state.paymentId}`);
-      const sequence = options.sequence ?? (details.payment.last_callback_sequence + 1);
-      const eventId = options.eventId || unique("channel");
-      try {
-        const result = await api(`/api/v1/payments/${state.paymentId}/callbacks`, {
-          method: "POST",
-          body: JSON.stringify({ event_id: eventId, sequence, outcome, reason: outcome === "failed" ? "mock channel rejected" : "", fault: options.fault || "" })
-        });
-        if (!options.preserveLast) { state.lastEventId = eventId; state.lastEventSequence = sequence; }
-        notify(`回调结果：${result.disposition}`);
-      } catch (error) { notify(error.message + "（可用相同 event_id 重试）", true); }
-      await refreshAll();
+    function createPayloadFromForm() {
+      const amount = Number(byId("amount").value);
+      return {
+        order_id: byId("orderId").value.trim(),
+        account_id: byId("accountId").value.trim(),
+        amount_cents: Math.round(amount * 100),
+        currency: "CNY",
+        auto_confirm: byId("autoConfirm").checked,
+        fault: byId("fault").value
+      };
     }
 
-    byId("successButton").onclick = () => sendCallback("success");
-    byId("failureButton").onclick = () => sendCallback("failed");
-    byId("confirmFaultButton").onclick = () => sendCallback("success", { fault: "before_confirm" });
-    byId("duplicateButton").onclick = async () => {
-      const details = await api(`/api/v1/payments/${state.paymentId}`);
+    async function submitPayment(payload, idempotencyKey, replay = false) {
+      const createPath = state.mode === "distributed" ? "/api/v1/distributed/payments" : "/api/v1/payments";
+      const result = await api(createPath, {
+        method: "POST",
+        headers: { "Idempotency-Key": idempotencyKey },
+        body: JSON.stringify(payload)
+      });
+      if (state.paymentId !== result.payment.id) {
+        state.lastEventId = "";
+        state.lastEventSequence = 0;
+      }
+      state.paymentId = result.payment.id;
+      state.lastCreatePayload = { ...payload };
+      state.lastIdempotencyKey = idempotencyKey;
+      if (payload.auto_confirm && result.payment.last_callback_sequence === 1) {
+        state.lastEventId = `auto_${result.payment.id}`;
+        state.lastEventSequence = 1;
+      }
+      if (result.idempotent_replay || replay) {
+        notify("幂等校验通过：已返回原支付单，未重复冻结或扣减资金。", "info");
+      } else if (state.mode === "distributed") {
+        notify(`支付请求已完成，当前状态：${statusLabels[result.payment.status] || result.payment.status}。`);
+      } else {
+        notify("支付请求已受理，请在交易详情中处理渠道结果。");
+      }
+      await refreshAll();
+      if (!replay && !result.idempotent_replay) freshKeys();
+    }
+
+    byId("paymentForm").addEventListener("submit", event => {
+      event.preventDefault();
+      if (!event.currentTarget.reportValidity()) return;
+      perform(byId("createButton"), async () => {
+        const payload = createPayloadFromForm();
+        await submitPayment(payload, byId("idempotencyKey").value.trim());
+      });
+    });
+
+    async function sendCallback(button, outcome, options = {}) {
+      await perform(button, async () => {
+        if (!state.paymentId) return;
+        const details = await api(`/api/v1/payments/${encodeURIComponent(state.paymentId)}`);
+        const sequence = options.sequence ?? (details.payment.last_callback_sequence + 1);
+        const eventId = options.eventId || unique("CH");
+        let result;
+        try {
+          result = await api(`/api/v1/payments/${encodeURIComponent(state.paymentId)}/callbacks`, {
+            method: "POST",
+            body: JSON.stringify({
+              event_id: eventId,
+              sequence,
+              outcome,
+              reason: outcome === "failed" ? "channel rejected payment" : "",
+              fault: options.fault || ""
+            })
+          });
+        } catch (error) {
+          await refreshAll();
+          throw error;
+        }
+        if (!options.preserveLast) {
+          state.lastEventId = eventId;
+          state.lastEventSequence = sequence;
+        }
+        const dispositionLabels = {
+          applied: "渠道结果已生效。",
+          duplicate: "重复回调已拦截，交易未重复处理。",
+          out_of_order: "乱序回调已拦截，交易状态保持不变。",
+          terminal_ignored: "交易已进入终态，状态回退已拦截。"
+        };
+        notify(dispositionLabels[result.disposition] || `回调处理结果：${result.disposition}`, result.disposition === "applied" ? "success" : "info");
+        await refreshAll();
+      });
+    }
+
+    byId("successButton").addEventListener("click", () => sendCallback(byId("successButton"), "success"));
+    byId("failureButton").addEventListener("click", () => sendCallback(byId("failureButton"), "failed"));
+    byId("confirmFaultButton").addEventListener("click", () => sendCallback(byId("confirmFaultButton"), "success", { fault: "before_confirm" }));
+
+    byId("duplicateButton").addEventListener("click", () => {
       const eventId = state.lastEventId || `auto_${state.paymentId}`;
-      const sequence = state.lastEventSequence || details.payment.last_callback_sequence || 1;
-      await sendCallback("success", { eventId, sequence, preserveLast: true });
-    };
-    byId("outOfOrderButton").onclick = async () => {
-      const details = await api(`/api/v1/payments/${state.paymentId}`);
-      await sendCallback("success", { sequence: Math.max(1, details.payment.last_callback_sequence), preserveLast: true });
-    };
-    byId("terminalButton").onclick = async () => {
-      const details = await api(`/api/v1/payments/${state.paymentId}`);
-      await sendCallback("failed", { sequence: details.payment.last_callback_sequence + 1, preserveLast: true });
-    };
-    byId("closeButton").onclick = async () => {
-      try {
-        await api(`/api/v1/payments/${state.paymentId}/close`, { method: "POST", body: JSON.stringify({ reason: "closed from demo UI" }) });
-        notify("支付已关闭，冻结资金已释放。"); await refreshAll();
-      } catch (error) { notify(error.message, true); }
-    };
-    byId("resetButton").onclick = async () => {
-      await api("/api/v1/demo/reset", { method: "POST" });
-      state.paymentId = ""; state.lastEventId = ""; state.lastEventSequence = 0;
-      byId("paymentEmpty").hidden = false; byId("paymentView").hidden = true;
-      notify("实验数据已重置。"); freshKeys(); await refreshSummary();
-    };
+      const sequence = state.lastEventSequence || state.currentPayment?.last_callback_sequence || 1;
+      sendCallback(byId("duplicateButton"), "success", { eventId, sequence, preserveLast: true });
+    });
+
+    byId("outOfOrderButton").addEventListener("click", () => {
+      sendCallback(byId("outOfOrderButton"), "success", {
+        sequence: Math.max(1, state.currentPayment?.last_callback_sequence || 1),
+        preserveLast: true
+      });
+    });
+
+    byId("terminalButton").addEventListener("click", () => {
+      sendCallback(byId("terminalButton"), "failed", {
+        sequence: (state.currentPayment?.last_callback_sequence || 0) + 1,
+        preserveLast: true
+      });
+    });
+
+    byId("replayCreateButton").addEventListener("click", () => {
+      perform(byId("replayCreateButton"), () => submitPayment({ ...state.lastCreatePayload }, state.lastIdempotencyKey, true));
+    });
+
+    byId("closeButton").addEventListener("click", () => {
+      perform(byId("closeButton"), async () => {
+        await api(`/api/v1/payments/${encodeURIComponent(state.paymentId)}/close`, {
+          method: "POST",
+          body: JSON.stringify({ reason: "operator closed payment" })
+        });
+        notify("交易已关闭，冻结资金已释放。", "info");
+        await refreshAll();
+      });
+    });
+
+    byId("resetButton").addEventListener("click", () => {
+      if (!window.confirm("确认重置全部演示交易和账户数据？此操作不可撤销。")) return;
+      perform(byId("resetButton"), async () => {
+        await api("/api/v1/demo/reset", { method: "POST" });
+        state.paymentId = "";
+        state.currentPayment = null;
+        state.lastEventId = "";
+        state.lastEventSequence = 0;
+        state.lastCreatePayload = null;
+        state.lastIdempotencyKey = "";
+        byId("paymentEmpty").hidden = false;
+        byId("paymentView").hidden = true;
+        freshKeys();
+        notify("演示数据已重置，可以开始新的交易验证。", "info");
+        await refreshSummary();
+      });
+    });
 
     freshKeys();
     (async () => {
-      await configureMode();
-      await refreshSummary();
-    })().catch(error => { byId("healthText").textContent = "服务不可用"; notify(error.message, true); });
+      try {
+        await configureMode();
+        await loadLatestPayment();
+        await refreshAll();
+        if (state.paymentId) notify("已恢复最近一笔交易，可继续核对状态和资金进度。", "info");
+      } catch (error) {
+        byId("healthDot").className = "service-dot error";
+        byId("healthText").textContent = "服务连接异常";
+        notify(humanError(error), "error");
+      } finally {
+        byId("workspace").setAttribute("aria-busy", "false");
+        syncControls();
+      }
+    })();
   </script>
 </body>
 </html>

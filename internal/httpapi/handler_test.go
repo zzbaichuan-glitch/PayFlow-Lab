@@ -7,9 +7,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"payflow-lab/internal/httpapi"
-	"payflow-lab/internal/service"
-	"payflow-lab/internal/store"
+	"github.com/zzbaichuan-glitch/PayFlow-Lab/internal/httpapi"
+	"github.com/zzbaichuan-glitch/PayFlow-Lab/internal/service"
+	"github.com/zzbaichuan-glitch/PayFlow-Lab/internal/store"
 )
 
 type testEnvelope struct {
